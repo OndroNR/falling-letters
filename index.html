@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="sk">
+<head>
+<!--
+cierna obrazovka
+
+v urcitom okamihu sa vytvori nahodny pocet stlpcov
+
+nahodne kde
+
+v stlpci nahodny pocet pismenok (vyska)
+
+nahodna rychlost rozlozenia
+
+nesmu sa prekryvat, aspon 1 pismenko medzera (ked su pod sebou)
+-->
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<title>Falling Letters</title>
+	<!--<link rel="stylesheet" href="style/style.css" type="text/css" />-->
+	<script type="text/javascript" src="jquery-1.6.min.js"></script>
+
+	<script type="text/javascript">
+		var width = 15;
+		var height = 20;
+
+		var cols = 75;
+		var rows = 25;
+		
+		
+		var maxCols = 4; // kolko sa ich naraz vytvori
+		var totalCols = 50;
+		var maxHeight = 10;
+		var minHeight = 2;
+		
+		var pismenkaInterval = 50;
+		var minPismenkaInterval = 50;
+		var maxPismenkaInterval = 130;
+		var pauseInterval = 500;
+		var genInterval = 100;
+		var animationTime = 250;
+		
+		function randomString(string_length) {
+			var chars = "0123456789ABCDEFGHIJKLMNOPQRTabcdefghiklmnopqrstuvwxyz";
+			var randomstring = '';
+			for (var i=0; i<string_length; i++) {
+			var rnum = Math.floor(Math.random() * chars.length);
+				randomstring += chars.substring(rnum,rnum+1);
+			}
+			return randomstring;
+		}
+		
+		function generateId() {
+			return (new Date()).getTime() + '' + Math.round(Math.random() * 1000);
+		}
+		
+		function cycle() {
+			console.log('cycle');
+			
+			if ($('.col').length >= totalCols)
+				return;
+			
+			var stlpcov = Math.round(Math.random() * (maxCols + 1));
+			
+			if (stlpcov)
+			{
+				for (var i = 0; i < stlpcov; i++)
+				{
+					
+					var id = generateId();
+					
+					var h = Math.round(Math.random() * max) + minHeight;
+
+					var left = Math.round(Math.random() * cols) * width;
+					var top = Math.round(Math.random() * (rows - minHeight)) * height;
+
+					var ostatne = $('.left' + left);
+					var fail = false;
+					ostatne.each(function() {
+						if (fail)
+							return;
+						// a1, a2, b1, b2
+						var a1 = $(this).css('top') - height;
+						var a2 = a1 + $(this).css('height') + 2*height;
+						var b1 = top;
+						var b2 = top + h*height;
+						
+						if (((b1 > a1) && (b1 < a2)) || ((b2 > a1) && (b2 < a2)))
+							fail = true;
+					});
+					
+					if (fail)
+						continue;
+
+
+					$('#container').append('<div class="col" id="' + id + '">');
+					$('#' + id).addClass('left' + left);
+					$('#' + id).addClass('top' + top);
+					$('#' + id).addClass('height' + h*height);
+					
+					
+					// ------------
+					
+					$('#' + id).css('left', left + 'px');
+					$('#' + id).css('top', top + 'px');
+					
+					var max = (maxHeight - minHeight);
+					var max2 = rows - (top / height);
+					//console.log(max + ' a ' + max2);
+					
+					if (max2 < max)
+						max = max2;
+					
+					var text = randomString(h);
+					var buu = '';
+					$.each(text.split(''), function() {
+						buu += '<span class="letter">' + this[0] + '</span>';
+
+					});				
+					$('#' + id).html(buu);
+					
+					$('#' + id + ' .letter').not(':first').css('visibility', 'hidden');
+					
+					var first = $('#' + id + ' .letter').first();
+					first.css('opacity', '0');
+					first.animate({opacity: 1.0}, animationTime);
+					
+					setTimeout('zobraz(' + id + ')', Math.round(Math.random() * (maxPismenkaInterval - minPismenkaInterval)) + minPismenkaInterval);
+				}
+			}
+		}
+		
+		function zobraz(id, interval) {
+			var found = null;
+
+			$('#' + id + ' .letter').each(function() {
+				if (!found)
+				{
+					if ($(this).css('visibility') == 'hidden')
+						found = this;
+				}
+			});
+			if (found)
+			{
+				$(found).css('opacity', '0');
+				$(found).css('visibility', 'visible');
+				$(found).animate({opacity: 1.0}, animationTime, function() {});
+			}
+			
+			if (found)
+				setTimeout('zobraz(' + id + ')', interval);
+			else
+				setTimeout('schovaj(' + id + ')', pauseInterval);
+		}
+		
+		function schovaj(id, interval) {
+			var found = false;
+
+			$('#' + id + ' .letter').each(function() {
+				if (!found)
+				{
+					if ($(this).css('visibility') == 'visible')
+						found = this;
+				}
+			});
+			if (found)
+			{
+				//$(found).css('opacity', '1.0');
+				$(found).animate({opacity:0}, animationTime, function() {
+					$(found).css('visibility', 'hidden');
+				});
+			}
+
+			if (found)
+				setTimeout('schovaj(' + id + ')', interval);
+			else
+				$('#' + id).remove();
+		}
+		
+		$(function() {
+			setInterval('cycle()', genInterval);
+
+			var viewportwidth = window.innerWidth;
+			var viewportheight = window.innerHeight;
+			cols = Math.floor(viewportwidth / width);
+			rows = Math.floor(viewportheight / height);
+
+			$('#container').css('width',   (width*cols) + 'px');
+			$('#container').css('height', (height*rows) + 'px');
+		});
+	</script>
+	
+	<style type="text/css">
+		@font-face {
+			font-family: 'Conv_mCode15';
+			src: url('fonts/mCode15.eot');
+			src: local('¢'), url('fonts/mCode15.woff') format('woff'), url('fonts/mCode15.ttf') format('truetype'), url('fonts/mCode15.svg') format('svg');
+			font-weight: normal;
+			font-style: normal;
+		}
+		body {
+			background: black;
+			color: green;
+			font-family: 'Conv_mCode15', monospace;
+			padding: 0;
+			margin: 0;
+			font-size: 10px;
+		}
+		#container {
+			position: relative;
+			width: 1000px;
+			height: 500px;
+			/*outline: 1px solid yellow;*/
+			overflow: hidden;
+		}
+		.col {
+			/*outline: 1px solid red;*/
+			width: 15px;
+			min-height: 20px;
+			position: absolute;
+			text-align: center;
+		}
+		.letter {
+			width: 15px;
+			height: 20px;
+			display: block;
+		}
+	</style>
+</head>
+<body>
+<div id="container">
+</div>
+</body>
+</html>
